@@ -1,0 +1,236 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <base href="https://conveyor.cloud/" />
+    <!-- Google Tag Manager -->
+    <script>
+        (function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-KJKSS89');</script>
+    <!-- End Google Tag Manager -->
+
+
+    <script type="text/javascript">
+
+        dataLayer.push({ ecommerce: null });
+        window.dataLayer.push({'event': '502_Bad_Gateway'});
+    </script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Local &amp; remote access to IIS Express - Conveyor</title>
+    <meta name="description" content="Conveyor is a Visual Studio extension that allows any device on your network or over the internet to connect to your IIS Express development server. Conveyor provides remote access over the internet by tunnelling direct to your ASP.NET application and will also fix 400 Bad Request errors in IIS Express.">
+    <meta name="author" content="">
+    <link rel="canonical" href="https://conveyor.cloud/">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,400,300italic,400italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="/plugins/bootstrap/css/bootstrap.min.css">
+    <!--<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />-->
+    <!-- Plugins CSS-->
+    <link rel="stylesheet" href="/plugins/font-awesome/css/font-awesome.css">
+    <link rel="stylesheet" href="/plugins/pe-icon-7-stroke/css/pe-icon-7-stroke.css">
+    <link rel="stylesheet" href="/plugins/animate-css/animate.min.css">
+    <link rel="stylesheet" href="/plugins/flexslider/flexslider.css">
+    <!-- Theme CSS -->
+    <link id="theme-style" rel="stylesheet" href="/css/styles.css">
+    <!-- SideBar CSS -->
+    <link href="/css/SideBar.css" rel="stylesheet" />
+    <!--SideBar Font-->
+    <!-- Font Awesome JS -->
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
+
+
+    <!--favicon stuff-->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=m2lNJ92GG6">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=m2lNJ92GG6">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=m2lNJ92GG6">
+    <link rel="manifest" href="/site.webmanifest?v=m2lNJ92GG6">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg?v=m2lNJ92GG6" color="#5bbad5">
+    <link rel="shortcut icon" href="/favicon.ico?v=m2lNJ92GG6">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <!--end favicon stuff-->
+    <!-- Javascript-->
+    <script type="text/javascript" src="/plugins/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="/plugins/popper.min.js"></script>
+    <script type="text/javascript" src="/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/plugins/back-to-top.js"></script>
+    <script type="text/javascript" src="/plugins/jquery-inview/jquery.inview.min.js"></script>
+    <script type="text/javascript" src="/plugins/isMobile/isMobile.min.js"></script>
+    <script type="text/javascript" src="/plugins/flexslider/jquery.flexslider-min.js"></script>
+    <script type="text/javascript" src="/js/main.js"></script>
+
+
+    <script src="/js/site.js?v=EWaMeWsJBYWmL2g_KkgXZQ5nPe-a3Ichp0LEgzXczKo"></script>
+
+
+
+    <!-- Modal Video -->
+    <script type="text/javascript" src="/js/modal-video.js"></script>
+
+
+    <!--[if !IE]>-->
+    <!--   <script type="text/javascript" src="/js/animations.js"></script>
+        -->
+    <!--<![endif]-->
+</head>
+<body class="home-page">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KJKSS89"
+                height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    </noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+
+    <div class="wrapper">
+        <!-- ******HEADER****** -->
+        <header id="header" class="header">
+            <div class="container">
+                <h1 class="logo">
+                    <a class="nav-link" href="/">
+                        <span class="logo-title">Conveyor</span>
+                    </a>
+                </h1><!--//logo-->
+                <nav class="main-nav navbar navbar-expand-md navbar-dark" role="navigation">
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse collapse justify-content-end" id="navbar-collapse">
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/Home/About">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/Home/How_To_Install">Download</a></li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" aria-expanded="false" aria-haspopup="true" href="#" data-toggle="dropdown">Help<!-- <i class="fa fa-angle-down"></i>--></a>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item nav-link" href="/Help/Setup_remote_connection_Visual_Studio_IIS_Express">Remote connection to IIS Express</a>
+                                    <a class="dropdown-item nav-link" href="/Help/SSL">TLS/SSL certificates</a>
+                                    <a class="dropdown-item nav-link" href="/Help/Writing_webhooks_on_localhost_with_Visual_Studio_and_IIS_Express">Webhooks over localhost</a>
+                                    <a class="dropdown-item nav-link" href="/Help/Debug_Zapier_WebHooks_over_localhost">Setting up Zapier webhooks</a>
+                                </div>
+                            </li>
+                            <li class="nav-item"><a class="nav-link" href="/blog/index.html">Blog</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/Home/Contact">Contact</a></li>
+
+                            <!--
+                                <ul class="nav navbar-nav navbar-right">
+                                    <li><a href="/Account/Register">Register</a></li>
+                                    <li><a href="/Account/Login">Log in</a></li>
+                                </ul>
+                            -->
+                        </ul><!--//nav-->
+                    </div><!--//navabr-collapse-->
+                </nav><!--//main-nav-->
+            </div><!--//container-->
+        </header><!--//header-->
+
+
+        <section id="video" class="video section homeHeader">
+            <div class="container">
+                <h1 class="homeH1">Sorry! Can't connect to your local application.</h1>
+
+            </div>
+
+
+        </section>
+
+        <section id="promo" class="promo section">
+            <div class="container intro">
+                <h2 class="title animated fadeInLeft delayp1 centerH2">Double check the URL was entered correctly, if it was, here's what you need to do on the computer that is running Conveyor:</h2>
+
+
+            </div><!--//container-->
+            <section id="features" class="features section homeFeatures">
+                <div class="container mx-auto">
+                    <br/>
+                    <p>
+                        <ol>
+                            
+                            <li>
+                                Make sure your project is being debugged (or running in Conveyor Pro)
+                            </li>
+                            <li>Restart Visual Studio to reconnect</li>
+
+
+                        </ol>
+                    </p>
+                    <p>If that doesn't help please <a href="mailto:support@conveyor.cloud">email support@conveyor.cloud</a></p>
+                </div>
+            </section>
+            </section><!--//faq-->
+            
+
+
+</div><!--//wrapper-->
+    <!-- ******FOOTER****** -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="container">
+                <div class="row">
+                    <div class="footer-col col-lg-5 col-md-7 col-12 about">
+                        <div class="footer-col-inner">
+                            <h3 class="title">About Us</h3>
+                            <p>Keyoti Inc. have been developing controls and components for software developers since 2002. Conveyor was created to provide all Visual Studio web developers with a simple to use tool that allows them to test their applications across a variety of devices. </p>
+
+                        </div><!--//footer-col-inner-->
+                    </div><!--//foooter-col-->
+                    <div class="footer-col col-lg-3 col-md-4 col-12 mr-lg-auto links">
+                        <div class="footer-col-inner">
+                            <h3 class="title">Links</h3>
+                            <ul class="list-unstyled">
+                                <li><a href="/blog/index.html"><i class="fa fa-caret-right"></i>Blog</a></li>
+                                <li><a href="/Home/Privacy_Policy"><i class="fa fa-caret-right"></i>Privacy Policy</a></li>
+                                <li><a href="/Home/Privacy_Policy#termsofservice"><i class="fa fa-caret-right"></i>Terms of Service</a></li>
+
+                            </ul>
+                        </div><!--//footer-col-inner-->
+                    </div><!--//foooter-col-->
+                    <div class="footer-col col-lg-3 col-12 contact">
+                        <div class="footer-col-inner">
+                            <h3 class="title">Get in touch</h3>
+                            <div class="row">
+                                <p class="email col-lg-12 col-md-4 col-12"><i class="fa fa-envelope"></i><a href="mailto:support@conveyor.cloud">support@conveyor.cloud</a></p>
+                                <p class="email col-lg-12 col-md-4 col-12"><i class="fa fa-comment"></i><a target="_blank" href="https://tawk.to/chat/58fe57ee4ac4446b24a6bce4/default/?$_tawk_popout=true">Live Chat</a></p>
+                            </div>
+                        </div><!--//footer-col-inner-->
+                    </div><!--//foooter-col-->
+                </div><!--//row-->
+            </div><!--//container-->
+        </div><!--//footer-content-->
+        <div class="bottom-bar">
+            <div class="container">
+                <div class="row">
+                    <small class="copyright col-md-6 col-12">Copyright Keyoti Inc.</small>
+                    <div class="social-container col-md-6 col-12">
+                        <ul class="social list-inline">
+                            <li class="list-inline-item"><a href="https://www.facebook.com/keyoti"><i class="fa fa-facebook"></i></a></li>
+                            <li class="last list-inline-item"><a href="https://www.youtube.com/keyoti"><i class="fa fa-youtube"></i></a></li>
+                        </ul><!--//social-->
+                    </div><!--//social-container-->
+                </div><!--//row-->
+            </div><!--//container-->
+        </div><!--//bottom-bar-->
+    </footer><!--//footer-->
+    <!--SideBar-->
+    <script type="text/javascript">
+       $(document).ready(function () {
+           $('#sidebarCollapse').on('click', function () {
+               $('#sidebar').toggleClass('active');
+           });
+       });
+    </script>
+
+</body>
+</html>
