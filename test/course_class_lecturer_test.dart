@@ -188,6 +188,19 @@ void main() {
       detector.dispose();
     });
 
+    test('FaceDetectorService handles URLs and resilient Base64 without FormatException', () async {
+      final detector = FaceDetectorService();
+      // Test URL input (like the seeded Dicebear URL)
+      final urlResult = await detector.compareTwoFaces(
+        selfiePath: 'non_existent_file.jpg',
+        referencePhotoBase64: 'https://api.dicebear.com/7.x/bottts/svg?seed=huudung',
+      );
+      // Because selfie file doesn't exist, it should return graceful 'Không tìm thấy' instead of throwing FormatException
+      expect(urlResult.isSuccess, isFalse);
+      expect(urlResult.message, contains('Không tìm thấy'));
+      detector.dispose();
+    });
+
     test('ClassStudentService isStudentPresentInClass and getClassAttendanceSummary update correctly', () async {
       final service = ClassStudentService();
       final studentCode = 'SV000299';

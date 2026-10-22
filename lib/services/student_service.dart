@@ -9,8 +9,7 @@ class StudentService {
   static const String _storageKey = 'managed_students_list';
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  static const String sampleAvatarBase64 =
-      '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';
+  static const String sampleAvatarBase64 = StudentModel.defaultAvatarBase64;
 
   /// Chuyển đổi bất kỳ mã sinh viên hoặc chuỗi ID nào thành định dạng UUID / uniqueidentifier hợp lệ của SQL Server
   static String toGuid(String input) {
@@ -129,6 +128,34 @@ class StudentService {
     if (index != -1) {
       list[index] = list[index].copyWith(photoBase64: base64Photo);
       await _saveList(list);
+
+      // Đồng bộ ảnh khuôn mặt mẫu lên Backend API để lưu vĩnh viễn vào SQL Server
+      final studentId = list[index].id;
+      final studentCd = list[index].studentCode;
+      try {
+        final token = await TokenStorage().getToken();
+        await ApiClient().put(
+          '/students/$studentId/avatar',
+          body: {'avatarUrl': base64Photo},
+          token: token,
+        );
+      } catch (e) {
+        try {
+          final token = await TokenStorage().getToken();
+          await ApiClient().put(
+            '/students/$studentCd',
+            body: {
+              'fullName': list[index].fullName,
+              'email': list[index].email,
+              'studentCode': list[index].studentCode,
+              'faculty': list[index].faculty,
+              'major': list[index].major,
+              'avatarUrl': base64Photo,
+            },
+            token: token,
+          );
+        } catch (_) {}
+      }
     }
   }
 
