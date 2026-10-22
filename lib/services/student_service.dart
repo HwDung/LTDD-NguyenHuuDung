@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:nguyenhuudung/core/api_client.dart';
+import 'package:nguyenhuudung/core/token_storage.dart';
 import 'package:nguyenhuudung/models/student_model.dart';
 
 class StudentService {
@@ -19,7 +21,16 @@ class StudentService {
 
     final upper = input.trim().toUpperCase();
     if (upper == 'SV000299' || upper == 'SV-000299') {
-      return '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+      return 'e2360a44-9dcd-4239-adfd-08df2fafa03f';
+    }
+    if (upper == 'SV000101' || upper == 'SV-000101') {
+      return 'cda04164-4266-45ab-adfe-08df2fafa03f';
+    }
+    if (upper == 'SV000102' || upper == 'SV-000102') {
+      return 'c54113dc-f218-446a-adff-08df2fafa03f';
+    }
+    if (upper == 'SV000103' || upper == 'SV-000103') {
+      return 'e0c1d68a-3c8c-428a-ae00-08df2fafa03f';
     }
     if (upper == 'SV000300' || upper == 'SV-000300') {
       return '00000300-0000-0000-0000-000000000300';
@@ -44,72 +55,66 @@ class StudentService {
   // Danh sách sinh viên mẫu ban đầu với ID là uniqueidentifier (GUID) chuẩn SQL Server
   static final List<StudentModel> _initialStudents = [
     StudentModel(
-      id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      id: 'e2360a44-9dcd-4239-adfd-08df2fafa03f',
       studentCode: 'SV000299',
       fullName: 'Nguyễn Hữu Dũng',
-      email: 'nguyenhuudung@student.edu.vn',
+      email: 'huudung.student@gmail.com',
       faculty: 'Công nghệ thông tin',
       major: 'Kỹ thuật phần mềm',
       phoneNumber: '0912345678',
       photoBase64: sampleAvatarBase64,
     ),
     StudentModel(
-      id: '00000300-0000-0000-0000-000000000300',
-      studentCode: 'SV000300',
-      fullName: 'Trần Thị Mai',
-      email: 'tranmai@student.edu.vn',
+      id: 'cda04164-4266-45ab-adfe-08df2fafa03f',
+      studentCode: 'SV000101',
+      fullName: 'Trần Minh Quân',
+      email: 'minhquan@gmail.com',
       faculty: 'Công nghệ thông tin',
-      major: 'Khoa học máy tính',
-      phoneNumber: '0987654321',
+      major: 'Kỹ thuật phần mềm',
+      phoneNumber: '0912345678',
       photoBase64: sampleAvatarBase64,
     ),
     StudentModel(
-      id: '00000301-0000-0000-0000-000000000301',
-      studentCode: 'SV000301',
-      fullName: 'Lê Văn Nam',
-      email: 'lenam@student.edu.vn',
-      faculty: 'Điện tử viễn thông',
-      major: 'Hệ thống nhúng và IoT',
-      phoneNumber: '0901122334',
+      id: 'c54113dc-f218-446a-adff-08df2fafa03f',
+      studentCode: 'SV000102',
+      fullName: 'Lê Ngọc Ánh',
+      email: 'ngocanh@gmail.com',
+      faculty: 'Công nghệ thông tin',
+      major: 'Công nghệ thông tin',
+      phoneNumber: '0912345678',
       photoBase64: sampleAvatarBase64,
     ),
   ];
 
   Future<List<StudentModel>> getStudents() async {
-    final rawJson = await _storage.read(key: _storageKey);
-    if (rawJson == null || rawJson.isEmpty) {
-      // Khởi tạo danh sách mặc định
-      await _saveList(_initialStudents);
-      return List<StudentModel>.from(_initialStudents);
-    }
-
+    // 1. Thử lấy danh sách mới nhất từ Backend API
     try {
-      final list = jsonDecode(rawJson) as List;
-      final parsed = list.map((item) => StudentModel.fromJson(Map<String, dynamic>.from(item))).toList();
+      final token = await TokenStorage().getToken();
+      final res = await ApiClient().get('/students', token: token);
+      final rawList = res['data'];
+      if (rawList is List && rawList.isNotEmpty) {
+        final list = rawList
+            .map((item) => StudentModel.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+        await _saveList(list);
+        return list;
+      }
+    } catch (_) {}
 
-      bool needsUpdate = false;
-      const oldDummy = 'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4z8DAwMAAAAcAAf4jHmcAAAAASUVORK5CYII=';
-      for (int i = 0; i < parsed.length; i++) {
-        // Đảm bảo ảnh đại diện hợp lệ
-        if (parsed[i].photoBase64 == null || parsed[i].photoBase64!.isEmpty || parsed[i].photoBase64 == oldDummy) {
-          parsed[i] = parsed[i].copyWith(photoBase64: sampleAvatarBase64);
-          needsUpdate = true;
-        }
-        // Đảm bảo ID sinh viên là GUID chuẩn SQL Server
-        final guidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
-        if (!guidRegex.hasMatch(parsed[i].id)) {
-          final properGuid = toGuid(parsed[i].studentCode.isNotEmpty ? parsed[i].studentCode : parsed[i].id);
-          parsed[i] = parsed[i].copyWith(id: properGuid);
-          needsUpdate = true;
-        }
-      }
-      if (needsUpdate) {
-        await _saveList(parsed);
-      }
-      return parsed;
-    } catch (_) {
-      return List<StudentModel>.from(_initialStudents);
+    // 2. Fallback đọc từ cache an toàn
+    final rawJson = await _storage.read(key: _storageKey);
+    if (rawJson != null && rawJson.isNotEmpty) {
+      try {
+        final list = jsonDecode(rawJson) as List;
+        final parsed = list
+            .map((item) => StudentModel.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+        if (parsed.isNotEmpty) return parsed;
+      } catch (_) {}
     }
+
+    await _saveList(_initialStudents);
+    return List<StudentModel>.from(_initialStudents);
   }
 
   Future<void> updateStudentPhoto(String studentCode, String base64Photo) async {
@@ -132,6 +137,43 @@ class StudentService {
     final updatedStudent = student.copyWith(id: validGuid);
     list.insert(0, updatedStudent);
     await _saveList(list);
+
+    // Đồng bộ lên API Backend
+    try {
+      final token = await TokenStorage().getToken();
+      final username = student.studentCode.isNotEmpty
+          ? student.studentCode.toLowerCase()
+          : (student.email.contains('@') ? student.email.split('@').first : 'student_${DateTime.now().millisecondsSinceEpoch}');
+      await ApiClient().post(
+        '/students',
+        body: {
+          'username': username,
+          'email': student.email,
+          'fullName': student.fullName,
+          'phoneNumber': student.phoneNumber,
+          'password': 'Student@123',
+          'faculty': student.faculty,
+          'major': student.major,
+          'enrollmentYear': DateTime.now().year,
+        },
+        token: token,
+      );
+      if (student.photoBase64 != null && student.photoBase64!.isNotEmpty) {
+        final identifier = student.studentCode.isNotEmpty ? student.studentCode : validGuid;
+        await ApiClient().put(
+          '/students/$identifier',
+          body: {
+            'fullName': student.fullName,
+            'email': student.email,
+            'phoneNumber': student.phoneNumber,
+            'faculty': student.faculty,
+            'major': student.major,
+            'avatarUrl': student.photoBase64,
+          },
+          token: token,
+        );
+      }
+    } catch (_) {}
   }
 
   Future<void> updateStudent(StudentModel student) async {
@@ -141,6 +183,24 @@ class StudentService {
       list[index] = student;
       await _saveList(list);
     }
+
+    // Đồng bộ lên API Backend
+    try {
+      final token = await TokenStorage().getToken();
+      final identifier = student.studentCode.isNotEmpty ? student.studentCode : student.id;
+      await ApiClient().put(
+        '/students/$identifier',
+        body: {
+          'fullName': student.fullName,
+          'email': student.email,
+          'phoneNumber': student.phoneNumber,
+          'faculty': student.faculty,
+          'major': student.major,
+          'avatarUrl': student.photoBase64,
+        },
+        token: token,
+      );
+    } catch (_) {}
   }
 
   Future<void> deleteStudent(String id) async {
@@ -148,6 +208,15 @@ class StudentService {
     final cleanGuid = id.trim().toLowerCase();
     list.removeWhere((s) => s.id.toLowerCase() == cleanGuid || s.studentCode.toUpperCase() == id.toUpperCase());
     await _saveList(list);
+
+    // Đồng bộ lên API Backend
+    try {
+      final token = await TokenStorage().getToken();
+      await ApiClient().delete(
+        '/students/$id',
+        token: token,
+      );
+    } catch (_) {}
   }
 
   Future<StudentModel?> findByCode(String code) async {

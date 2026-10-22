@@ -713,18 +713,29 @@ class ClassStudentService {
         'gpsCoordinates': gpsCoordinates ?? '$lat, $lon',
       };
 
-      // 1. Thử gửi đến /attendance (Chuẩn RESTful API của hệ thống)
+      // 1. GỬI ĐẾN /attendance/check-in (Endpoint điểm danh chính của Backend API lưu bảng AttendanceRecords)
+      final checkInPayload = <String, dynamic>{
+        'sessionId': parsedId,
+        'classCode': normClass,
+        'checkInCode': normStudent,
+        'capturedFaceImage': safeFace,
+        'faceMatched': true,
+        'latitude': lat,
+        'longitude': lon,
+        'deviceInfo': deviceInfo ?? 'Mobile Flutter App',
+      };
+
       try {
-        await _apiClient.post(ApiConstants.attendance, body: body, token: token);
+        await _apiClient.post('/attendance/check-in', body: checkInPayload, token: token);
         syncedToApi = true;
       } catch (e1) {
-        debugPrint('POST /attendance error ($e1), fallback to /attendance/check-in');
-        // 2. Thử gửi đến /attendance/check-in
+        debugPrint('POST /attendance/check-in error ($e1), fallback to /attendance');
+        // 2. Thử gửi đến /attendance chuẩn RESTful
         try {
-          await _apiClient.post('/attendance/check-in', body: body, token: token);
+          await _apiClient.post(ApiConstants.attendance, body: body, token: token);
           syncedToApi = true;
         } catch (e2) {
-          debugPrint('POST /attendance/check-in error ($e2), fallback to session endpoint');
+          debugPrint('POST /attendance error ($e2), fallback to session endpoint');
           try {
             await _apiClient.post(ApiConstants.attendanceBySession(parsedId), body: body, token: token);
             syncedToApi = true;

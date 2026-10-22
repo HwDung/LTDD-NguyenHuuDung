@@ -22,15 +22,17 @@ class StudentModel {
   });
 
   factory StudentModel.fromJson(Map<String, dynamic> json) {
+    final rawUser = json['user'];
+    final userMap = rawUser is Map<String, dynamic> ? rawUser : null;
     return StudentModel(
-      id: json['id']?.toString() ?? '',
+      id: (json['id'] ?? json['userId'])?.toString() ?? '',
       studentCode: json['studentCode']?.toString() ?? '',
-      fullName: json['fullName']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
+      fullName: (json['fullName'] ?? userMap?['fullName'])?.toString() ?? '',
+      email: (json['email'] ?? userMap?['email'])?.toString() ?? '',
       faculty: json['faculty']?.toString() ?? 'Công nghệ thông tin',
       major: json['major']?.toString() ?? 'Kỹ thuật phần mềm',
-      phoneNumber: json['phoneNumber']?.toString(),
-      photoBase64: json['photoBase64']?.toString(),
+      phoneNumber: (json['phoneNumber'] ?? userMap?['phoneNumber'])?.toString(),
+      photoBase64: (json['avatarUrl'] ?? json['photoBase64'])?.toString(),
       photoPath: json['photoPath']?.toString(),
     );
   }

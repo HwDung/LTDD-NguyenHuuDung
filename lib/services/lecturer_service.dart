@@ -13,28 +13,28 @@ class LecturerService {
 
   static final List<LecturerModel> _initialLecturers = [
     LecturerModel(
-      id: 'gv-001',
-      lecturerCode: 'GV001',
-      fullName: 'ThS. Trần Văn Hùng',
-      email: 'hungtv@university.edu.vn',
-      department: 'Bộ môn Kỹ thuật phần mềm',
-      phoneNumber: '0988776655',
+      id: 'e9966800-bf60-4b28-adfa-08df2fafa03f',
+      lecturerCode: 'GV000001',
+      fullName: 'ThS. Nguyễn Văn An',
+      email: 'nguyenvanan@gmail.com',
+      department: 'Công nghệ phần mềm',
+      phoneNumber: '0901234567',
     ),
     LecturerModel(
-      id: 'gv-002',
-      lecturerCode: 'GV002',
-      fullName: 'TS. Nguyễn Thị Lan',
-      email: 'lannt@university.edu.vn',
-      department: 'Bộ môn Khoa học máy tính',
-      phoneNumber: '0911223344',
+      id: '10ba0011-2411-4c51-adfb-08df2fafa03f',
+      lecturerCode: 'GV000002',
+      fullName: 'TS. Trần Thị Bình',
+      email: 'tranthibinh@gmail.com',
+      department: 'Hệ thống thông tin',
+      phoneNumber: '0901234567',
     ),
     LecturerModel(
-      id: 'gv-003',
-      lecturerCode: 'GV003',
-      fullName: 'PGS. TS. Lê Hoàng Nam',
-      email: 'namlh@university.edu.vn',
-      department: 'Bộ môn Hệ thống thông tin',
-      phoneNumber: '0933445566',
+      id: '89851f6f-a48b-477e-adfc-08df2fafa03f',
+      lecturerCode: 'GV000003',
+      fullName: 'ThS. Lê Hoàng Cường',
+      email: 'lehoangcuong@gmail.com',
+      department: 'Mạng máy tính & An ninh',
+      phoneNumber: '0901234567',
     ),
   ];
 
@@ -90,15 +90,18 @@ class LecturerService {
     // Đồng bộ lên backend API
     try {
       final token = await TokenStorage().getToken();
+      final username = lecturer.lecturerCode.isNotEmpty
+          ? lecturer.lecturerCode.toLowerCase()
+          : (lecturer.email.contains('@') ? lecturer.email.split('@').first : 'gv_${DateTime.now().millisecondsSinceEpoch}');
       await _apiClient.post(
         '/lecturers',
         body: {
-          'username': lecturer.lecturerCode.toLowerCase(),
+          'username': username,
           'email': lecturer.email,
           'fullName': lecturer.fullName,
           'department': lecturer.department,
           'phoneNumber': lecturer.phoneNumber ?? '',
-          'password': 'Password123!',
+          'password': 'Lecturer@123',
         },
         token: token,
       );
@@ -107,17 +110,42 @@ class LecturerService {
 
   Future<void> updateLecturer(LecturerModel lecturer) async {
     final list = await getLecturers();
-    final index = list.indexWhere((l) => l.id == lecturer.id);
+    final index = list.indexWhere((l) => l.id == lecturer.id || l.lecturerCode.toUpperCase() == lecturer.lecturerCode.toUpperCase());
     if (index != -1) {
       list[index] = lecturer;
       await _saveList(list);
     }
+
+    // Đồng bộ lên backend API
+    try {
+      final token = await TokenStorage().getToken();
+      final identifier = lecturer.lecturerCode.isNotEmpty ? lecturer.lecturerCode : lecturer.id;
+      await _apiClient.put(
+        '/lecturers/$identifier',
+        body: {
+          'fullName': lecturer.fullName,
+          'email': lecturer.email,
+          'phoneNumber': lecturer.phoneNumber ?? '',
+          'department': lecturer.department,
+        },
+        token: token,
+      );
+    } catch (_) {}
   }
 
   Future<void> deleteLecturer(String id) async {
     final list = await getLecturers();
-    list.removeWhere((l) => l.id == id);
+    list.removeWhere((l) => l.id == id || l.lecturerCode.toUpperCase() == id.toUpperCase());
     await _saveList(list);
+
+    // Đồng bộ lên backend API
+    try {
+      final token = await TokenStorage().getToken();
+      await _apiClient.delete(
+        '/lecturers/$id',
+        token: token,
+      );
+    } catch (_) {}
   }
 
   Future<void> _saveList(List<LecturerModel> list) async {

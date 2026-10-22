@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   // Controllers cho Quản trị viên (Admin)
   final _adminFormKey = GlobalKey<FormState>();
   final _adminUsernameController = TextEditingController(text: 'admin');
-  final _adminPasswordController = TextEditingController(text: 'Admin@123');
+  final _adminPasswordController = TextEditingController(text: 'Admin@12345');
   final _adminOtpController = TextEditingController();
   bool _isAdminSendingOtp = false;
   bool _isAdminLoggingIn = false;
@@ -215,17 +215,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() {
         _adminOtpSent = true;
         _adminInfoMessage = response['message']?.toString() ??
-            'Mã xác thực OTP đã được gửi về email đăng ký của Admin. Vui lòng nhập mã để hoàn tất đăng nhập.';
+            'Mã xác thực OTP đã được gửi về email của Admin. Vui lòng kiểm tra email và nhập mã OTP 6 số để hoàn tất đăng nhập.';
       });
-      _showMessage('Đã gửi mã OTP xác thực qua email!');
+      _showMessage('Đã gửi mã OTP xác thực qua email thành công!');
     } catch (e) {
       if (!mounted) return;
-      // Nếu server tunnel offline, tạo mã OTP kiểm thử demo 123456
       setState(() {
-        _adminOtpSent = true;
-        _adminInfoMessage = 'Hệ thống đã phát mã OTP xác thực: 123456 (nhập mã này để xác thực Admin)';
+        _adminOtpSent = false;
+        _adminErrorMessage = 'Không thể gửi mã OTP: $e';
       });
-      _showMessage('Đã tạo mã OTP xác thực!');
+      _showMessage('Lỗi gửi OTP: $e', isError: true);
     } finally {
       if (mounted) setState(() => _isAdminSendingOtp = false);
     }
@@ -259,23 +258,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     });
 
     try {
-      String role = 'Admin';
-      try {
-        final result = await _authService.verifyLoginOtp(username: username, otp: otpCode);
-        role = result['role']?.toString() ?? 'Admin';
-      } catch (e) {
-        // Hỗ trợ kiểm thử demo với mã 123456 khi backend tunnel offline
-        if (otpCode == '123456') {
-          await _tokenStorage.saveToken('admin_token_${DateTime.now().millisecondsSinceEpoch}');
-          await _tokenStorage.saveUserInfo(
-            role: 'Admin',
-            username: username.isEmpty ? 'Quản trị viên' : username,
-            email: 'admin@university.edu.vn',
-          );
-        } else {
-          rethrow;
-        }
-      }
+      final result = await _authService.verifyLoginOtp(username: username, otp: otpCode);
+      final role = result['role']?.toString() ?? 'Admin';
 
       if (!mounted) return;
       _showMessage('Xác thực OTP thành công! Chào mừng Quản trị viên (Admin).');

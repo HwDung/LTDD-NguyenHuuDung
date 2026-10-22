@@ -302,7 +302,7 @@ void main() {
 
       final guid299 = StudentService.toGuid('SV000299');
       expect(guidRegex.hasMatch(guid299), isTrue);
-      expect(guid299, '3fa85f64-5717-4562-b3fc-2c963f66afa6');
+      expect(guid299, 'e2360a44-9dcd-4239-adfd-08df2fafa03f');
 
       final guid300 = StudentService.toGuid('SV000300');
       expect(guidRegex.hasMatch(guid300), isTrue);
