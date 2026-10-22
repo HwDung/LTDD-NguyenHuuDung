@@ -19,27 +19,35 @@ class ApiClient {
 
   final http.Client _client;
 
-  String get _baseUrl {
-    final value = dotenv.env['API_BASE_URL']?.trim();
+  static String? _cachedWorkingBaseUrl;
 
-    if (value == null || value.isEmpty) {
-      throw ApiException(
-        'Chưa cấu hình API_BASE_URL trong file .env',
-      );
+  List<String> _getCandidateBaseUrls() {
+    final list = <String>[];
+    if (_cachedWorkingBaseUrl != null && _cachedWorkingBaseUrl!.isNotEmpty) {
+      list.add(_cachedWorkingBaseUrl!);
     }
-
-    return value.replaceFirst(RegExp(r'/+$'), '');
-  }
-
-  Uri _buildUri(String path) {
-    final normalizedPath = path.startsWith('/') ? path : '/$path';
-    return Uri.parse('$_baseUrl$normalizedPath');
+    final envVal = dotenv.env['API_BASE_URL']?.trim() ?? '';
+    if (envVal.isNotEmpty) {
+      final clean = envVal.replaceFirst(RegExp(r'/+$'), '');
+      if (!list.contains(clean)) list.add(clean);
+    }
+    final fallbacks = [
+      'http://10.0.2.2:5007/api',
+      'http://192.168.1.33:5007/api',
+      'http://localhost:5007/api',
+    ];
+    for (final fb in fallbacks) {
+      if (!list.contains(fb)) list.add(fb);
+    }
+    return list;
   }
 
   Map<String, String> _buildHeaders(String? token) {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+      'User-Agent': 'FlutterApp/1.0',
     };
 
     // Chỉ gửi Authorization Bearer nếu token là JWT hợp lệ từ máy chủ (có cấu trúc phần ngăn cách bởi dấu chấm)
@@ -55,25 +63,44 @@ class ApiClient {
     return headers;
   }
 
+  Future<http.Response> _sendWithFallback(
+    Future<http.Response> Function(Uri uri) sender,
+    String path,
+  ) async {
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final candidates = _getCandidateBaseUrls();
+    ApiException? lastError;
+
+    for (final base in candidates) {
+      try {
+        final uri = Uri.parse('$base$normalizedPath');
+        final response = await sender(uri).timeout(const Duration(seconds: 6));
+        _cachedWorkingBaseUrl = base;
+        return response;
+      } on TimeoutException {
+        lastError = ApiException('Máy chủ tại $base không phản hồi kịp thời.');
+      } on http.ClientException catch (e) {
+        lastError = ApiException('Không thể kết nối đến máy chủ: ${e.message}');
+      } catch (e) {
+        lastError = ApiException('Lỗi khi gửi yêu cầu: $e');
+      }
+    }
+
+    throw lastError ?? ApiException('Không thể kết nối đến máy chủ API.');
+  }
+
   Future<Map<String, dynamic>> get(
     String path, {
     String? token,
   }) async {
     try {
-      final response = await _client
-          .get(
-            _buildUri(path),
-            headers: _buildHeaders(token),
-          )
-          .timeout(const Duration(seconds: 25));
-
+      final response = await _sendWithFallback(
+        (uri) => _client.get(uri, headers: _buildHeaders(token)),
+        path,
+      );
       return _handleResponse(response);
     } on ApiException {
       rethrow;
-    } on TimeoutException {
-      throw ApiException('Máy chủ phản hồi quá lâu.');
-    } on http.ClientException {
-      throw ApiException('Không thể kết nối đến máy chủ API.');
     } catch (e) {
       throw ApiException('Lỗi khi gửi yêu cầu: $e');
     }
@@ -85,21 +112,17 @@ class ApiClient {
     String? token,
   }) async {
     try {
-      final response = await _client
-          .post(
-            _buildUri(path),
-            headers: _buildHeaders(token),
-            body: jsonEncode(body),
-          )
-          .timeout(const Duration(seconds: 25));
-
+      final response = await _sendWithFallback(
+        (uri) => _client.post(
+          uri,
+          headers: _buildHeaders(token),
+          body: jsonEncode(body),
+        ),
+        path,
+      );
       return _handleResponse(response);
     } on ApiException {
       rethrow;
-    } on TimeoutException {
-      throw ApiException('Máy chủ phản hồi quá lâu.');
-    } on http.ClientException {
-      throw ApiException('Không thể kết nối đến máy chủ API.');
     } catch (e) {
       throw ApiException('Lỗi khi gửi yêu cầu: $e');
     }
@@ -111,21 +134,17 @@ class ApiClient {
     String? token,
   }) async {
     try {
-      final response = await _client
-          .put(
-            _buildUri(path),
-            headers: _buildHeaders(token),
-            body: jsonEncode(body),
-          )
-          .timeout(const Duration(seconds: 25));
-
+      final response = await _sendWithFallback(
+        (uri) => _client.put(
+          uri,
+          headers: _buildHeaders(token),
+          body: jsonEncode(body),
+        ),
+        path,
+      );
       return _handleResponse(response);
     } on ApiException {
       rethrow;
-    } on TimeoutException {
-      throw ApiException('Máy chủ phản hồi quá lâu.');
-    } on http.ClientException {
-      throw ApiException('Không thể kết nối đến máy chủ API.');
     } catch (e) {
       throw ApiException('Lỗi khi gửi yêu cầu: $e');
     }
@@ -136,20 +155,13 @@ class ApiClient {
     String? token,
   }) async {
     try {
-      final response = await _client
-          .delete(
-            _buildUri(path),
-            headers: _buildHeaders(token),
-          )
-          .timeout(const Duration(seconds: 25));
-
+      final response = await _sendWithFallback(
+        (uri) => _client.delete(uri, headers: _buildHeaders(token)),
+        path,
+      );
       return _handleResponse(response);
     } on ApiException {
       rethrow;
-    } on TimeoutException {
-      throw ApiException('Máy chủ phản hồi quá lâu.');
-    } on http.ClientException {
-      throw ApiException('Không thể kết nối đến máy chủ API.');
     } catch (e) {
       throw ApiException('Lỗi khi gửi yêu cầu: $e');
     }

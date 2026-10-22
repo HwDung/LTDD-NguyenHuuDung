@@ -78,7 +78,25 @@ class _QrDisplayAttendanceScreenState extends State<QrDisplayAttendanceScreen> {
     });
   }
 
+  ImageProvider? _safeImageProvider(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final str = raw.trim();
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+      if (!str.contains('.svg') && !str.contains('/svg')) return NetworkImage(str);
+      return null;
+    }
+    try {
+      String clean = str;
+      if (clean.contains(',')) clean = clean.split(',').last;
+      clean = clean.replaceAll(RegExp(r'\s+'), '');
+      return MemoryImage(base64Decode(clean));
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _showStudentScanDetail(SessionAttendanceDetail item) {
+    final imageProvider = _safeImageProvider(item.capturedFaceBase64);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -97,8 +115,8 @@ class _QrDisplayAttendanceScreenState extends State<QrDisplayAttendanceScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: item.isPresent && item.capturedFaceBase64 != null && item.capturedFaceBase64!.isNotEmpty
-                      ? Image.memory(base64Decode(item.capturedFaceBase64!), fit: BoxFit.cover)
+                  child: item.isPresent && imageProvider != null
+                      ? Image(image: imageProvider, fit: BoxFit.cover)
                       : Container(
                           color: Colors.grey.shade100,
                           child: Icon(
@@ -408,10 +426,8 @@ class _QrDisplayAttendanceScreenState extends State<QrDisplayAttendanceScreen> {
                           onTap: () => _showStudentScanDetail(item),
                           leading: CircleAvatar(
                             backgroundColor: isPresent ? Colors.green.shade100 : Colors.red.shade100,
-                            backgroundImage: (item.capturedFaceBase64 != null && item.capturedFaceBase64!.isNotEmpty)
-                                ? MemoryImage(base64Decode(item.capturedFaceBase64!))
-                                : null,
-                            child: (item.capturedFaceBase64 == null || item.capturedFaceBase64!.isEmpty)
+                            backgroundImage: _safeImageProvider(item.capturedFaceBase64),
+                            child: _safeImageProvider(item.capturedFaceBase64) == null
                                 ? Icon(
                                     isPresent ? Icons.check_circle : Icons.cancel,
                                     color: isPresent ? Colors.green.shade800 : Colors.red.shade800,

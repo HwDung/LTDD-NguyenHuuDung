@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:nguyenhuudung/core/api_client.dart';
 import 'package:nguyenhuudung/core/token_storage.dart';
@@ -132,91 +133,102 @@ class StudentService {
   }
 
   Future<void> addStudent(StudentModel student) async {
-    final list = await getStudents();
     final validGuid = toGuid(student.id.isNotEmpty ? student.id : student.studentCode);
-    final updatedStudent = student.copyWith(id: validGuid);
-    list.insert(0, updatedStudent);
-    await _saveList(list);
+    StudentModel finalStudent = student.copyWith(id: validGuid);
 
-    // Đồng bộ lên API Backend
+    // Đồng bộ lên API Backend trước
     try {
       final token = await TokenStorage().getToken();
       final username = student.studentCode.isNotEmpty
           ? student.studentCode.toLowerCase()
           : (student.email.contains('@') ? student.email.split('@').first : 'student_${DateTime.now().millisecondsSinceEpoch}');
-      await ApiClient().post(
+      final res = await ApiClient().post(
         '/students',
         body: {
           'username': username,
-          'email': student.email,
-          'fullName': student.fullName,
-          'phoneNumber': student.phoneNumber,
+          'email': student.email.trim(),
+          'fullName': student.fullName.trim(),
+          'studentCode': student.studentCode.trim().toUpperCase(),
+          'phoneNumber': student.phoneNumber?.trim(),
           'password': 'Student@123',
           'faculty': student.faculty,
           'major': student.major,
           'enrollmentYear': DateTime.now().year,
+          'avatarUrl': student.photoBase64,
         },
         token: token,
       );
-      if (student.photoBase64 != null && student.photoBase64!.isNotEmpty) {
-        final identifier = student.studentCode.isNotEmpty ? student.studentCode : validGuid;
-        await ApiClient().put(
-          '/students/$identifier',
-          body: {
-            'fullName': student.fullName,
-            'email': student.email,
-            'phoneNumber': student.phoneNumber,
-            'faculty': student.faculty,
-            'major': student.major,
-            'avatarUrl': student.photoBase64,
-          },
-          token: token,
-        );
-      }
-    } catch (_) {}
+      final data = res['data'] is Map<String, dynamic> ? res['data'] as Map<String, dynamic> : res;
+      final serverId = (data['userId'] ?? data['id'])?.toString();
+      final serverCode = data['studentCode']?.toString();
+      finalStudent = student.copyWith(
+        id: serverId ?? validGuid,
+        studentCode: serverCode ?? student.studentCode,
+      );
+    } catch (e) {
+      // Nếu API lỗi mạng hoặc server trả về lỗi nghiệp vụ, vẫn cập nhật offline nhưng rethrow nếu cần thông báo
+      debugPrint('Lỗi thêm sinh viên qua API: $e');
+      rethrow;
+    }
+
+    final list = await getStudents();
+    list.removeWhere((s) => s.id == finalStudent.id || s.studentCode.toUpperCase() == finalStudent.studentCode.toUpperCase());
+    list.insert(0, finalStudent);
+    await _saveList(list);
   }
 
   Future<void> updateStudent(StudentModel student) async {
-    final list = await getStudents();
-    final index = list.indexWhere((s) => s.id == student.id || s.studentCode.toUpperCase() == student.studentCode.toUpperCase());
-    if (index != -1) {
-      list[index] = student;
-      await _saveList(list);
-    }
+    final token = await TokenStorage().getToken();
+    final identifier = student.studentCode.isNotEmpty ? student.studentCode : student.id;
 
     // Đồng bộ lên API Backend
     try {
-      final token = await TokenStorage().getToken();
-      final identifier = student.studentCode.isNotEmpty ? student.studentCode : student.id;
       await ApiClient().put(
         '/students/$identifier',
         body: {
-          'fullName': student.fullName,
-          'email': student.email,
-          'phoneNumber': student.phoneNumber,
+          'fullName': student.fullName.trim(),
+          'email': student.email.trim(),
+          'studentCode': student.studentCode.trim().toUpperCase(),
+          'phoneNumber': student.phoneNumber?.trim(),
           'faculty': student.faculty,
           'major': student.major,
           'avatarUrl': student.photoBase64,
         },
         token: token,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Lỗi cập nhật sinh viên qua API: $e');
+      rethrow;
+    }
+
+    final list = await getStudents();
+    final index = list.indexWhere((s) => s.id == student.id || s.studentCode.toUpperCase() == student.studentCode.toUpperCase());
+    if (index != -1) {
+      list[index] = student;
+    } else {
+      list.insert(0, student);
+    }
+    await _saveList(list);
   }
 
   Future<void> deleteStudent(String id) async {
-    final list = await getStudents();
-    final cleanGuid = id.trim().toLowerCase();
-    list.removeWhere((s) => s.id.toLowerCase() == cleanGuid || s.studentCode.toUpperCase() == id.toUpperCase());
-    await _saveList(list);
+    final token = await TokenStorage().getToken();
 
     // Đồng bộ lên API Backend
     try {
-      final token = await TokenStorage().getToken();
       await ApiClient().delete(
         '/students/$id',
         token: token,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Lỗi xóa sinh viên qua API: $e');
+      rethrow;
+    }
+
+    final list = await getStudents();
+    final cleanGuid = id.trim().toLowerCase();
+    list.removeWhere((s) => s.id.toLowerCase() == cleanGuid || s.studentCode.toUpperCase() == id.toUpperCase());
+    await _saveList(list);
   }
 
   Future<StudentModel?> findByCode(String code) async {

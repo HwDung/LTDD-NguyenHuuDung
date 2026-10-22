@@ -40,6 +40,7 @@ class StudentModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'userId': id,
       'studentCode': studentCode,
       'fullName': fullName,
       'email': email,
@@ -47,6 +48,7 @@ class StudentModel {
       'major': major,
       'phoneNumber': phoneNumber,
       'photoBase64': photoBase64,
+      'avatarUrl': photoBase64,
       'photoPath': photoPath,
     };
   }

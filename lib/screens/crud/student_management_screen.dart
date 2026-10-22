@@ -50,6 +50,27 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
     return _students.where((s) => s.fullName.toLowerCase().contains(q) || s.studentCode.toLowerCase().contains(q)).toList();
   }
 
+  ImageProvider? _safeAvatarProvider(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final str = raw.trim();
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+      if (str.contains('.svg') || str.contains('/svg')) {
+        return null;
+      }
+      return NetworkImage(str);
+    }
+    try {
+      String clean = str;
+      if (clean.contains(',')) {
+        clean = clean.split(',').last;
+      }
+      clean = clean.replaceAll(RegExp(r'\s+'), '');
+      return MemoryImage(base64Decode(clean));
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _showStudentDialog({StudentModel? student}) async {
     final isEditing = student != null;
     final nameCtrl = TextEditingController(text: student?.fullName ?? '');
@@ -57,22 +78,25 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
     final emailCtrl = TextEditingController(text: student?.email ?? '');
     final phoneCtrl = TextEditingController(text: student?.phoneNumber ?? '');
 
+    // Đảm bảo danh sách khoa luôn có dữ liệu an toàn
+    final facultiesList = _faculties.isNotEmpty ? _faculties : _academicService.getDefaultFaculties();
+
     // Chọn Khoa ban đầu từ dữ liệu API
-    FacultyModel selectedFaculty = _faculties.firstWhere(
-      (f) => f.name == (student?.faculty ?? 'Công nghệ thông tin'),
-      orElse: () => _faculties.isNotEmpty
-          ? _faculties.first
-          : FacultyModel(id: 1, code: 'CNTT', name: 'Công nghệ thông tin', majors: [
-              MajorModel(id: 1, code: 'KTPM', name: 'Kỹ thuật phần mềm', facultyId: 1),
-            ]),
+    FacultyModel selectedFaculty = facultiesList.firstWhere(
+      (f) => f.name.trim().toLowerCase() == (student?.faculty ?? '').trim().toLowerCase() ||
+             f.code.trim().toLowerCase() == (student?.faculty ?? '').trim().toLowerCase(),
+      orElse: () => facultiesList.first,
     );
 
     // Chọn Ngành ban đầu thuộc Khoa đã chọn
-    MajorModel selectedMajor = selectedFaculty.majors.firstWhere(
-      (m) => m.name == (student?.major ?? 'Kỹ thuật phần mềm'),
-      orElse: () => selectedFaculty.majors.isNotEmpty
-          ? selectedFaculty.majors.first
-          : MajorModel(id: 1, code: 'KTPM', name: 'Kỹ thuật phần mềm', facultyId: selectedFaculty.id),
+    final majorsInFaculty = selectedFaculty.majors.isNotEmpty
+        ? selectedFaculty.majors
+        : [MajorModel(id: 0, code: 'KHAC', name: selectedFaculty.name, facultyId: selectedFaculty.id)];
+
+    MajorModel selectedMajor = majorsInFaculty.firstWhere(
+      (m) => m.name.trim().toLowerCase() == (student?.major ?? '').trim().toLowerCase() ||
+             m.code.trim().toLowerCase() == (student?.major ?? '').trim().toLowerCase(),
+      orElse: () => majorsInFaculty.first,
     );
 
     String? currentBase64 = student?.photoBase64;
@@ -105,6 +129,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
             }
           }
 
+          final dialogAvatarProvider = _safeAvatarProvider(currentBase64);
+
           return AlertDialog(
             title: Text(isEditing ? 'Sửa thông tin Sinh viên' : 'Thêm Sinh viên mới'),
             content: SingleChildScrollView(
@@ -122,8 +148,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                               CircleAvatar(
                                 radius: 46,
                                 backgroundColor: Colors.indigo.shade100,
-                                backgroundImage: currentBase64 != null ? MemoryImage(base64Decode(currentBase64!)) : null,
-                                child: currentBase64 == null
+                                backgroundImage: dialogAvatarProvider,
+                                child: dialogAvatarProvider == null
                                     ? const Icon(Icons.face_retouching_natural, size: 48, color: Colors.indigo)
                                     : null,
                               ),
@@ -235,11 +261,11 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                     DropdownButtonFormField<FacultyModel>(
                       initialValue: selectedFaculty,
                       decoration: const InputDecoration(
-                        labelText: 'Khoa (Dữ liệu từ API) *',
+                        labelText: 'Khoa *',
                         prefixIcon: Icon(Icons.domain),
                       ),
                       isExpanded: true,
-                      items: _faculties.map((f) {
+                      items: facultiesList.map((f) {
                         return DropdownMenuItem<FacultyModel>(
                           value: f,
                           child: Text('${f.code} - ${f.name}', overflow: TextOverflow.ellipsis),
@@ -249,9 +275,10 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                         if (newFaculty != null) {
                           setDialogState(() {
                             selectedFaculty = newFaculty;
-                            selectedMajor = newFaculty.majors.isNotEmpty
-                                ? newFaculty.majors.first
-                                : MajorModel(id: 0, code: '', name: 'Khác', facultyId: newFaculty.id);
+                            final newMajors = newFaculty.majors.isNotEmpty
+                                ? newFaculty.majors
+                                : [MajorModel(id: 0, code: 'KHAC', name: newFaculty.name, facultyId: newFaculty.id)];
+                            selectedMajor = newMajors.first;
                           });
                         }
                       },
@@ -260,14 +287,17 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
 
                     // DROPDOWN NGÀNH (LỌC TƯƠNG ỨNG THEO KHOA ĐÃ CHỌN)
                     DropdownButtonFormField<MajorModel>(
-                      key: ValueKey('major_${selectedFaculty.id}'),
+                      key: ValueKey('major_${selectedFaculty.id}_${selectedFaculty.code}'),
                       initialValue: selectedMajor,
                       decoration: const InputDecoration(
-                        labelText: 'Ngành học liên quan (Dữ liệu từ API) *',
+                        labelText: 'Ngành học *',
                         prefixIcon: Icon(Icons.school),
                       ),
                       isExpanded: true,
-                      items: selectedFaculty.majors.map((m) {
+                      items: (selectedFaculty.majors.isNotEmpty
+                              ? selectedFaculty.majors
+                              : [selectedMajor])
+                          .map((m) {
                         return DropdownMenuItem<MajorModel>(
                           value: m,
                           child: Text('${m.code} - ${m.name}', overflow: TextOverflow.ellipsis),
@@ -293,7 +323,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                   Navigator.pop(ctx);
 
                   final newStudent = StudentModel(
-                    id: student?.id ?? 'sv-${DateTime.now().millisecondsSinceEpoch}',
+                    id: student?.id ?? '',
                     studentCode: codeCtrl.text.trim().toUpperCase(),
                     fullName: nameCtrl.text.trim(),
                     email: emailCtrl.text.trim(),
@@ -303,14 +333,19 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                     photoBase64: currentBase64,
                   );
 
-                  if (isEditing) {
-                    await _service.updateStudent(newStudent);
-                    _showSnackbar('Cập nhật thông tin sinh viên thành công!');
-                  } else {
-                    await _service.addStudent(newStudent);
-                    _showSnackbar('Thêm sinh viên mới thành công!');
+                  try {
+                    if (isEditing) {
+                      await _service.updateStudent(newStudent);
+                      _showSnackbar('Cập nhật thông tin sinh viên thành công!');
+                    } else {
+                      await _service.addStudent(newStudent);
+                      _showSnackbar('Thêm sinh viên mới thành công!');
+                    }
+                    _loadData();
+                  } catch (e) {
+                    _showSnackbar('Lỗi: $e', isError: true);
+                    _loadData();
                   }
-                  _loadData();
                 },
                 child: Text(isEditing ? 'Lưu' : 'Thêm sinh viên'),
               ),
@@ -339,9 +374,13 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
     );
 
     if (confirm == true) {
-      await _service.deleteStudent(student.id);
-      _showSnackbar('Đã xóa sinh viên thành công!');
-      _loadData();
+      try {
+        await _service.deleteStudent(student.studentCode.isNotEmpty ? student.studentCode : student.id);
+        _showSnackbar('Đã xóa sinh viên thành công!');
+        _loadData();
+      } catch (e) {
+        _showSnackbar('Lỗi khi xóa sinh viên: $e', isError: true);
+      }
     }
   }
 
@@ -438,6 +477,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                         separatorBuilder: (context, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final student = _filteredStudents[index];
+                          final avatarProvider = _safeAvatarProvider(student.photoBase64);
                           final hasPhoto = student.photoBase64 != null && student.photoBase64!.isNotEmpty;
                           return Card(
                             elevation: 1,
@@ -449,8 +489,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                   CircleAvatar(
                                     radius: 26,
                                     backgroundColor: Colors.indigo.shade100,
-                                    backgroundImage: hasPhoto ? MemoryImage(base64Decode(student.photoBase64!)) : null,
-                                    child: !hasPhoto
+                                    backgroundImage: avatarProvider,
+                                    child: avatarProvider == null
                                         ? Text(
                                             student.fullName.isNotEmpty ? student.fullName[0].toUpperCase() : 'S',
                                             style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),

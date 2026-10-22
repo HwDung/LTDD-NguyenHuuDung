@@ -52,6 +52,8 @@ class AcademicService {
     return allFaculties.expand((f) => f.majors).toList();
   }
 
+  List<FacultyModel> getDefaultFaculties() => _getDefaultFaculties();
+
   List<FacultyModel> _getDefaultFaculties() {
     return [
       FacultyModel(

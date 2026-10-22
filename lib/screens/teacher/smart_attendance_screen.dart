@@ -259,6 +259,27 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
     });
   }
 
+  Widget _buildSafePhotoWidget(String? photo, {Widget? fallback}) {
+    if (photo == null || photo.trim().isEmpty) {
+      return fallback ?? const Icon(Icons.person, size: 64, color: Colors.grey);
+    }
+    final str = photo.trim();
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+      if (!str.contains('.svg') && !str.contains('/svg')) {
+        return Image.network(str, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => fallback ?? const Icon(Icons.person, size: 64, color: Colors.grey));
+      }
+      return fallback ?? const Icon(Icons.person, size: 64, color: Colors.grey);
+    }
+    try {
+      String clean = str;
+      if (clean.contains(',')) clean = clean.split(',').last;
+      clean = clean.replaceAll(RegExp(r'\s+'), '');
+      return Image.memory(base64Decode(clean), fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => fallback ?? const Icon(Icons.person, size: 64, color: Colors.grey));
+    } catch (_) {
+      return fallback ?? const Icon(Icons.person, size: 64, color: Colors.grey);
+    }
+  }
+
   void _resetFlow() {
     setState(() {
       _currentStep = 0;
@@ -506,7 +527,6 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
   // ==================== GIAO DIỆN BƯỚC 2: QUÉT & SO KHỚP KHUÔN MẶT ====================
   Widget _buildStepFaceMatch() {
     final student = _scannedStudent!;
-    final hasAdminPhoto = student.photoBase64 != null && student.photoBase64!.isNotEmpty;
 
     return Card(
       elevation: 2,
@@ -546,9 +566,7 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: hasAdminPhoto
-                            ? Image.memory(base64Decode(student.photoBase64!), fit: BoxFit.cover)
-                            : const Icon(Icons.person, size: 64, color: Colors.grey),
+                        child: _buildSafePhotoWidget(student.photoBase64),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -575,9 +593,7 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: _capturedFaceBase64 != null
-                            ? (hasAdminPhoto
-                                ? Image.memory(base64Decode(student.photoBase64!), fit: BoxFit.cover)
-                                : const Icon(Icons.face, size: 64, color: Colors.teal))
+                            ? _buildSafePhotoWidget(_capturedFaceBase64, fallback: const Icon(Icons.face, size: 64, color: Colors.teal))
                             : const Icon(Icons.camera_alt_outlined, size: 48, color: Colors.teal),
                       ),
                     ),

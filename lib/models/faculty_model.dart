@@ -34,6 +34,16 @@ class MajorModel {
       'description': description,
     };
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MajorModel &&
+          runtimeType == other.runtimeType &&
+          (id == other.id || (name == other.name && name.isNotEmpty));
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode;
 }
 
 class FacultyModel {
@@ -77,4 +87,14 @@ class FacultyModel {
       'majors': majors.map((m) => m.toJson()).toList(),
     };
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FacultyModel &&
+          runtimeType == other.runtimeType &&
+          (id == other.id || (name == other.name && name.isNotEmpty));
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode;
 }

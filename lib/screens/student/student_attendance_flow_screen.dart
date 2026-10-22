@@ -387,6 +387,25 @@ class _StudentAttendanceFlowScreenState extends State<StudentAttendanceFlowScree
     });
   }
 
+  Widget _buildSafeImage(String? raw, {Widget? fallback}) {
+    if (raw == null || raw.trim().isEmpty) return fallback ?? const SizedBox.shrink();
+    final str = raw.trim();
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+      if (!str.contains('.svg') && !str.contains('/svg')) {
+        return Image.network(str, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => fallback ?? const SizedBox.shrink());
+      }
+      return fallback ?? const SizedBox.shrink();
+    }
+    try {
+      String clean = str;
+      if (clean.contains(',')) clean = clean.split(',').last;
+      clean = clean.replaceAll(RegExp(r'\s+'), '');
+      return Image.memory(base64Decode(clean), fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => fallback ?? const SizedBox.shrink());
+    } catch (_) {
+      return fallback ?? const SizedBox.shrink();
+    }
+  }
+
   // ==================== GỬI ĐIỂM DANH HOÀN TẤT CHO GIẢNG VIÊN ====================
   Future<void> _submitAttendance() async {
     setState(() => _isSubmitting = true);
@@ -715,7 +734,7 @@ class _StudentAttendanceFlowScreenState extends State<StudentAttendanceFlowScree
                       child: refPhotoBase64 != null && refPhotoBase64.isNotEmpty
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(base64Decode(refPhotoBase64), fit: BoxFit.cover),
+                              child: _buildSafeImage(refPhotoBase64),
                             )
                           : Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -789,7 +808,7 @@ class _StudentAttendanceFlowScreenState extends State<StudentAttendanceFlowScree
                           : _capturedFaceBase64 != null
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(11),
-                                  child: Image.memory(base64Decode(_capturedFaceBase64!), fit: BoxFit.cover),
+                                  child: _buildSafeImage(_capturedFaceBase64),
                                 )
                               : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,

@@ -111,7 +111,22 @@ class FaceDetectorService {
       }
 
       // 2. Quét khuôn mặt trong ảnh Hồ sơ gốc (Reference Photo)
-      final refBytes = base64Decode(referencePhotoBase64.trim());
+      Uint8List refBytes;
+      try {
+        String cleanRef = referencePhotoBase64.trim();
+        if (cleanRef.contains(',')) {
+          cleanRef = cleanRef.split(',').last;
+        }
+        cleanRef = cleanRef.replaceAll(RegExp(r'\s+'), '');
+        refBytes = base64Decode(cleanRef);
+      } catch (e) {
+        return FaceVerificationResult(
+          isSuccess: false,
+          faceCount: 0,
+          message: 'Ảnh hồ sơ chưa đúng định dạng Base64 khuôn mặt hợp lệ. Vui lòng chụp hoặc cập nhật lại ảnh chân dung sinh viên.',
+        );
+      }
+
       final tempDir = Directory.systemTemp;
       tempRefFile = File('${tempDir.path}/ref_face_${DateTime.now().millisecondsSinceEpoch}.jpg');
       await tempRefFile.writeAsBytes(refBytes);
